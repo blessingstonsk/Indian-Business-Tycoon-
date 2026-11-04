@@ -101,7 +101,7 @@ export function LandingPage() {
             Test player name
           </label>
           <input id="test-name" className="field" placeholder="Emulator test player name" value={testName} onChange={(e) => setTestName(e.target.value)} />
-          <Button type="submit" variant="secondary" disabled={testName.trim().length < 2} loading={busy}>
+          <Button type="submit" variant="secondary" className="shrink-0 whitespace-nowrap" disabled={testName.trim().length < 2} loading={busy}>
             Test sign-in
           </Button>
         </form>

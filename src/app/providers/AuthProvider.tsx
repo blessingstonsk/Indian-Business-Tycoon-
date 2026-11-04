@@ -59,11 +59,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await signInWithPopup(firebase().auth, provider);
     } catch (e) {
       const code = (e as { code?: string }).code ?? '';
+      console.warn('Google sign-in failed:', code || e);
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
+      if (usingEmulators) {
+        // The emulator's Google widget needs a working popup; the redirect flow can't complete in many
+        // browsers against a local emulator, so point people at the emulator test sign-in instead.
+        reportError({ message: 'Google sign-in popup failed locally – use “Test sign-in” below instead' });
+        document.getElementById('test-name')?.focus();
+        return;
+      }
       // Popups are often blocked on iOS Safari / in-app browsers: fall back to redirect.
       if (code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment') {
         await signInWithRedirect(firebase().auth, provider);
-      } else if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
-        reportError({ message: 'Sign-in failed – please try again' });
+      } else if (code === 'auth/unauthorized-domain') {
+        reportError({ message: 'This site is not an authorized sign-in domain yet – add it in Firebase Auth settings' });
+      } else if (code === 'auth/network-request-failed') {
+        reportError({ message: 'Network problem – check your connection and try again' });
+      } else {
+        reportError({ message: `Sign-in failed – please try again${code ? ` (${code})` : ''}` });
       }
     }
   }, []);
