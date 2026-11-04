@@ -37,7 +37,7 @@ firestore.rules  database.rules.json  firestore.indexes.json  firebase.json
 
 ## Local setup
 
-Requirements: Node 22 (`.nvmrc`). The Firebase Emulator Suite also needs Java 11+ and `firebase-tools`.
+Requirements: Node 22 (`.nvmrc`) and, for the Firebase Emulator Suite, Java 11+ (for example `winget install EclipseAdoptium.Temurin.21.JDK`). The Firebase CLI is a dev dependency.
 
 ```bash
 npm install
@@ -47,25 +47,30 @@ npm install
 npm install --prefix functions
 ```
 
-```bash
-cp .env.example .env.local
+**Option A: emulators (recommended).** Create `.env.local`:
+
+```
+VITE_FIREBASE_API_KEY=demo-api-key
+VITE_FIREBASE_AUTH_DOMAIN=demo-ibt.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=demo-ibt
+VITE_FIREBASE_APP_ID=1:000000000000:web:demo
+VITE_FIREBASE_DATABASE_URL=https://demo-ibt-default-rtdb.firebaseio.com
+VITE_USE_EMULATORS=true
 ```
 
-**Option A: emulators (recommended).** Set `VITE_USE_EMULATORS=true` and `VITE_FIREBASE_PROJECT_ID=demo-ibt` in `.env.local`, plus any non-empty `VITE_FIREBASE_API_KEY` and `VITE_FIREBASE_APP_ID` values. Then build the functions and start the emulators:
+Then start the emulators in one terminal (this also builds the functions) and Vite in another:
 
 ```bash
-npm run functions:build
-```
-
-```bash
-npx firebase-tools emulators:start --project demo-ibt
+npm run emulators
 ```
 
 ```bash
 npm run dev
 ```
 
-Open http://localhost:5173. The Auth emulator shows a fake Google sign-in, so use two browser profiles to play against yourself.
+Open http://localhost:5173. In emulator mode the landing page shows a **Test sign-in** box, so you can type any name to get a fake Google account. Sign-in is per browser tab, so open a second tab for a second player. Typing the same name again returns you to the same seat. The emulator UI is at http://127.0.0.1:4000. Scheduled jobs don't run locally (there's no Pub/Sub emulator); clients still enforce turn timeouts.
+
+> **Windows:** if the Firestore emulator exits with `Unable to establish loopback connection`, set `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:/jtmp` (create the folder first) before `npm run emulators`.
 
 **Option B: a real Firebase dev project.** Fill in `.env.local` with the project's web config. Enable Google sign-in, Firestore (`asia-south1`), and the Realtime Database. Then deploy the rules and functions (see Deployment).
 
@@ -82,7 +87,8 @@ Open http://localhost:5173. The Auth emulator shows a fake Google sign-in, so us
 | `npm run build` | Production build into `dist/` (+ `404.html` fallback) |
 | `npm run functions:build` | Bundle Cloud Functions into `functions/lib` |
 | `npm run test:e2e` | Playwright (run `npx playwright install` once) |
-| `npx firebase-tools emulators:exec --only firestore "npx vitest run tests/rules"` | Security-rules tests |
+| `npm run emulators` | Build functions + start the Emulator Suite (`demo-ibt`) |
+| `npm run test:rules` | Security-rules tests on the Firestore emulator |
 
 ## Deployment
 

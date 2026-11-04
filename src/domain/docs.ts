@@ -49,7 +49,8 @@ export interface ReactionDoc {
   displayName: string;
   emoteId: string;
   createdAt: number;
-  ttlAt: number;
+  /** Firestore Timestamp when read from Firestore; use createdAt + REACTION_TTL_MS for expiry. */
+  ttlAt: unknown;
 }
 
 export interface FriendRequestDoc {

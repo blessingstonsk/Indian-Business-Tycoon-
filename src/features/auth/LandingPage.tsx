@@ -8,7 +8,7 @@ import { Die } from '../../components/board/Dice3D';
 import { PropertyArt } from '../../components/board/PropertyArt';
 import { Button, Spinner } from '../../components/ui/primitives';
 import { Logo, SoundToggle, ThemeToggle } from '../../components/ui/TopBar';
-import { firebaseConfigured } from '../../lib/firebase/client';
+import { usingEmulators } from '../../lib/firebase/client';
 import { rupees } from '../../lib/utils/format';
 import { HowToPlay } from '../howto/HowToPlay';
 
@@ -57,7 +57,8 @@ export function Hero({ children }: { children: React.ReactNode }) {
 }
 
 export function LandingPage() {
-  const { user, profile, initializing, signIn } = useAuth();
+  const { user, profile, initializing, signIn, signInTestUser } = useAuth();
+  const [testName, setTestName] = useState('');
   const location = useLocation();
   const [howTo, setHowTo] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -86,9 +87,27 @@ export function LandingPage() {
           </Button>
         </div>
       )}
+      {usingEmulators && !initializing && (
+        <form
+          className="mt-4 flex max-w-md gap-2"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setBusy(true);
+            await signInTestUser(testName).catch(() => undefined);
+            setBusy(false);
+          }}
+        >
+          <label htmlFor="test-name" className="sr-only">
+            Test player name
+          </label>
+          <input id="test-name" className="field" placeholder="Emulator test player name" value={testName} onChange={(e) => setTestName(e.target.value)} />
+          <Button type="submit" variant="secondary" disabled={testName.trim().length < 2} loading={busy}>
+            Test sign-in
+          </Button>
+        </form>
+      )}
       <p className="mt-4 max-w-md text-sm text-muted">Sign in to create a private room, invite friends with a code, and play together from anywhere. Virtual money only.</p>
       <HowToPlay open={howTo} onOpenChange={setHowTo} />
-      {!firebaseConfigured && null}
     </Hero>
   );
 }

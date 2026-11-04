@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Gift, Sparkles } from 'lucide-react';
-import { useEffect, useRef } from 'react';
-import { DECK_LABEL, EMOTES } from '@shared';
+import { useEffect, useRef, useState } from 'react';
+import { DECK_LABEL, EMOTES, REACTION_TTL_MS } from '@shared';
 import { useReducedMotion } from '../../stores/settings';
 import type { CardReveal } from '../../features/game/useGameAnimation';
 import type { ReactionDoc } from '../../domain/docs';
@@ -111,8 +111,13 @@ export function Confetti() {
 }
 
 export function ReactionBubbles({ reactions }: { reactions: ReactionDoc[] }) {
-  const now = Date.now();
-  const live = reactions.filter((r) => r.ttlAt > now).slice(-6);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  // ttlAt is a Firestore Timestamp on the wire (for TTL policies), so derive expiry from createdAt.
+  const live = reactions.filter((r) => r.createdAt + REACTION_TTL_MS > now).slice(-6);
   return (
     <div className="pointer-events-none fixed bottom-24 right-4 z-30 flex flex-col items-end gap-2" aria-live="polite">
       <AnimatePresence>

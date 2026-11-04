@@ -1,6 +1,6 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
-import { connectAuthEmulator, getAuth, type Auth } from 'firebase/auth';
+import { browserSessionPersistence, connectAuthEmulator, getAuth, initializeAuth, type Auth } from 'firebase/auth';
 import { connectDatabaseEmulator, getDatabase, type Database } from 'firebase/database';
 import { connectFirestoreEmulator, getFirestore, type Firestore } from 'firebase/firestore';
 import { connectFunctionsEmulator, getFunctions, type Functions } from 'firebase/functions';
@@ -35,7 +35,8 @@ export function firebase(): FirebaseHandles {
   if (env.VITE_APPCHECK_SITE_KEY && !usingEmulators) {
     initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(env.VITE_APPCHECK_SITE_KEY), isTokenAutoRefreshEnabled: true });
   }
-  const auth = getAuth(app);
+  // With emulators, keep each tab's sign-in separate so one browser can seat several test players.
+  const auth = usingEmulators ? initializeAuth(app, { persistence: browserSessionPersistence }) : getAuth(app);
   const db = getFirestore(app);
   const functions = getFunctions(app, (env.VITE_FIREBASE_FUNCTIONS_REGION as string) || 'asia-south1');
   const rtdb = config.databaseURL || usingEmulators ? getDatabase(app) : null;

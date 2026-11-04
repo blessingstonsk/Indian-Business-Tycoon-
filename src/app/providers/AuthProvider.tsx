@@ -1,6 +1,7 @@
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
+  signInWithCredential,
   signInWithPopup,
   signInWithRedirect,
   signOut as fbSignOut,
@@ -9,7 +10,7 @@ import {
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useDoc } from '../../hooks/useFirestore';
 import { api } from '../../lib/api/callables';
-import { firebase } from '../../lib/firebase/client';
+import { firebase, usingEmulators } from '../../lib/firebase/client';
 import { startPresence } from '../../lib/presence';
 import { reportError } from '../../stores/toasts';
 import type { UserDoc } from '../../domain/docs';
@@ -19,6 +20,8 @@ interface AuthState {
   profile: UserDoc | null;
   initializing: boolean;
   signIn: () => Promise<void>;
+  /** Auth Emulator only: sign in as a named fake Google user. */
+  signInTestUser: (name: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -65,11 +68,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const signInTestUser = useCallback(async (name: string) => {
+    if (!usingEmulators) throw new Error('Test sign-in is only available with the Auth emulator');
+    // The emulator accepts an unsigned JSON "id token" for federated providers.
+    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'player';
+    const token = JSON.stringify({ sub: `test-${slug}`, email: `${slug}@example.test`, email_verified: true, name: name.trim() });
+    await signInWithCredential(firebase().auth, GoogleAuthProvider.credential(token));
+  }, []);
+
   const signOut = useCallback(() => fbSignOut(firebase().auth), []);
 
   const value = useMemo<AuthState>(
-    () => ({ user, profile: profile.data, initializing: initializing || (Boolean(user) && !profile.data && profile.loading), signIn, signOut }),
-    [user, profile.data, profile.loading, initializing, signIn, signOut],
+    () => ({ user, profile: profile.data, initializing: initializing || (Boolean(user) && !profile.data && profile.loading), signIn, signInTestUser, signOut }),
+    [user, profile.data, profile.loading, initializing, signIn, signInTestUser, signOut],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
