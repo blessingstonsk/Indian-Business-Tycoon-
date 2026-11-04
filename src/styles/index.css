@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --canvas: 251 247 239;
+  --surface: 255 253 248;
+  --sunken: 243 236 222;
+  --ink: 27 35 64;
+  --muted: 102 108 128;
+  --line: 226 216 196;
+  --emerald: 31 138 91;
+  --emerald-soft: 220 240 229;
+  --gold: 201 162 39;
+  --gold-soft: 250 240 205;
+  --navy: 27 35 64;
+  --danger: 192 57 43;
+  color-scheme: light;
+}
+
+.dark {
+  --canvas: 16 20 36;
+  --surface: 24 30 52;
+  --sunken: 33 40 66;
+  --ink: 238 233 220;
+  --muted: 160 166 186;
+  --line: 52 60 90;
+  --emerald: 72 187 132;
+  --emerald-soft: 26 58 48;
+  --gold: 226 190 80;
+  --gold-soft: 64 54 26;
+  --navy: 238 233 220;
+  --danger: 236 104 88;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  @apply bg-canvas text-ink font-sans antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid rgb(var(--gold));
+  outline-offset: 2px;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line bg-surface shadow-card;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-line bg-sunken px-2.5 py-0.5 text-xs font-medium;
+  }
+  .field {
+    @apply min-h-11 w-full rounded-xl border border-line bg-surface px-3 text-base text-ink placeholder:text-muted focus:border-emerald focus:outline-none;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium text-muted;
+  }
+}
+
+/* 3D dice */
+.dice-scene {
+  perspective: 600px;
+}
+.dice-cube {
+  position: relative;
+  transform-style: preserve-3d;
+}
+.dice-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 14%;
+  border-radius: 18%;
+  background: linear-gradient(145deg, #fffdf8, #efe7d6);
+  border: 1px solid rgb(0 0 0 / 0.08);
+  box-shadow: inset 0 -3px 6px rgb(0 0 0 / 0.08);
+  backface-visibility: hidden;
+}
+.dice-pip {
+  width: 72%;
+  height: 72%;
+  margin: auto;
+  border-radius: 9999px;
+  background: #1b2340;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
