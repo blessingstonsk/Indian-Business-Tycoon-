@@ -12,9 +12,10 @@ A real-time multiplayer Indian property-trading board game for **2–6 friends**
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)
-![Firebase](https://img.shields.io/badge/Firebase-Functions%20·%20Firestore%20·%20Auth-FFCA28?logo=firebase&logoColor=black)
+![Node](https://img.shields.io/badge/Node-22%20·%20WebSocket-339933?logo=nodedotjs&logoColor=white)
+![Oracle Cloud](https://img.shields.io/badge/Oracle%20Cloud-Autonomous%20DB%20·%20Always%20Free-F80000?logo=oracle&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind-3-06B6D4?logo=tailwindcss&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-65%20passing-1f8a5b)
+![Tests](https://img.shields.io/badge/tests-67%20passing-1f8a5b)
 
 [**Features**](#-features) · [**Screenshots**](#-screenshots) · [**How to play**](#-how-to-play) · [**Quick start**](#-quick-start) · [**Architecture**](#%EF%B8%8F-architecture) · [**Deploy**](#-deployment) · [**Roadmap**](#%EF%B8%8F-roadmap)
 
@@ -150,10 +151,10 @@ There's no free-text chat. Players react with a curated set, rate-limited to 3 e
 ## 🚀 Quick start
 
 <details open>
-<summary><b>Option A: full multiplayer locally with the Firebase emulators (recommended)</b></summary>
+<summary><b>Option A: full multiplayer on your computer (recommended)</b></summary>
 <br />
 
-**You need:** Node 22 (see `.nvmrc`) and Java 11+. On Windows: `winget install EclipseAdoptium.Temurin.21.JDK`. The Firebase CLI comes with the dev dependencies.
+**You need:** Node 22 (see `.nvmrc`). Nothing else: locally the server uses an in-memory database saved to `server/data/dev-db.json`.
 
 **1. Install**
 
@@ -162,42 +163,47 @@ npm install
 ```
 
 ```bash
-npm install --prefix functions
+npm install --prefix server
 ```
 
-**2. Create `.env.local`.** `demo-*` projects never touch real Firebase.
+**2. Create the two local config files**
+
+`server/.env`:
 
 ```ini
-VITE_FIREBASE_API_KEY=demo-api-key
-VITE_FIREBASE_AUTH_DOMAIN=demo-ibt.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=demo-ibt
-VITE_FIREBASE_APP_ID=1:000000000000:web:demo
-VITE_FIREBASE_DATABASE_URL=https://demo-ibt-default-rtdb.firebaseio.com
-VITE_USE_EMULATORS=true
+PORT=8787
+ALLOWED_ORIGINS=http://localhost:5173
+DEV_LOGIN=true
 ```
 
-**3. Start the backend** (builds the functions, then starts Auth, Firestore, Functions and Realtime Database):
+`.env.local`:
+
+```ini
+VITE_API_URL=http://localhost:8787
+VITE_DEV_LOGIN=true
+```
+
+**3. Start the game server** in one terminal:
 
 ```bash
-npm run emulators
+npm run server
 ```
 
-**4. Start the app** in a second terminal:
+**4. Start the website** in another terminal:
 
 ```bash
 npm run dev
 ```
 
-**5. Play.** Open <http://localhost:5173> and type a name into **Test sign-in**. Open a **second tab** and sign in with another name to get a second player, since each tab has its own session. Typing the same name again returns you to the same seat. The emulator dashboard is at <http://127.0.0.1:4000>.
+**5. Play.** Open <http://localhost:5173> and type a name into **Test sign-in**. Open a **second tab** with another name to get a second player, since each tab has its own session. Typing the same name again returns you to the same seat.
 
 > [!TIP]
-> **Windows:** if the Firestore emulator exits with `Unable to establish loopback connection`, create `C:\jtmp` and set
-> `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:/jtmp` before running `npm run emulators`.
+> To test real Google sign-in locally, add `GOOGLE_CLIENT_ID` to `server/.env` and `VITE_GOOGLE_CLIENT_ID` to `.env.local`, using a client that allows `http://localhost:5173`.
 
 </details>
 
 <details>
-<summary><b>Option B: just look at the board (no backend)</b></summary>
+<summary><b>Option B: just look at the board (no server)</b></summary>
 <br />
 
 ```bash
@@ -209,28 +215,19 @@ Then open <http://localhost:5173/#/dev/playground>. This development-only page r
 </details>
 
 <details>
-<summary><b>Option C: a real Firebase project</b></summary>
-<br />
-
-Create a project, enable **Google sign-in**, **Firestore** (`asia-south1`) and the **Realtime Database**, copy its web config into `.env.local` with `VITE_USE_EMULATORS=false`, then deploy the backend (see [Deployment](#-deployment)).
-
-</details>
-
-<details>
 <summary><b>🧰 All scripts</b></summary>
 <br />
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | Vite dev server on :5173 |
-| `npm run emulators` | Build functions + start the Firebase Emulator Suite (`demo-ibt`) |
-| `npm test` | Engine unit & property tests + backend integration tests |
-| `npm run test:rules` | Firestore security-rules tests on the emulator |
+| `npm run dev` | Website dev server on :5173 |
+| `npm run server` | Game server with auto-reload on :8787 |
+| `npm test` | Engine unit & property tests + server tests (services, permissions, live end-to-end) |
 | `npm run test:e2e` | Playwright (run `npx playwright install chromium` once) |
-| `npm run typecheck` | App, shared engine and functions |
+| `npm run typecheck` | Website, shared engine and server |
 | `npm run lint` | ESLint |
-| `npm run build` | Production build into `dist/` |
-| `npm run functions:build` | Bundle Cloud Functions into `functions/lib` |
+| `npm run build` | Production website build into `dist/` |
+| `npm run server:build` | Bundle the server into `server/dist/server.js` |
 | `node scripts/readme-screenshots.mjs` | Regenerate the images in this README |
 
 </details>
@@ -239,23 +236,23 @@ Create a project, enable **Google sign-in**, **Firestore** (`asia-south1`) and t
 
 ```mermaid
 flowchart LR
-    subgraph Browser["🖥️ Browser (React + Vite, GitHub Pages)"]
-        UI["Board · Lobby · Friends · History"]
+    subgraph Pages["🌐 GitHub Pages"]
+        UI["React app<br/>Board · Lobby · Friends · History"]
     end
-    subgraph Firebase["🔥 Firebase"]
-        Auth["Auth<br/>Google sign-in"]
-        CF["Cloud Functions<br/>asia-south1"]
-        FS[("Firestore<br/>rooms · games · events · archives")]
-        RT[("Realtime DB<br/>presence")]
+    Google["🔑 Google sign-in<br/>Identity Services"]
+    subgraph OCI["☁️ Oracle Cloud · Always Free"]
+        Caddy["Caddy<br/>HTTPS · sslip.io"]
+        Server["Node game server<br/>API · WebSocket hub · jobs"]
+        ADB[("Autonomous Database<br/>rooms · games · events · archives")]
     end
     Engine["⚙️ shared/engine<br/>pure, deterministic rules"]
 
-    UI -- "sign in" --> Auth
-    UI -- "commands only" --> CF
-    CF -- "transaction" --> FS
-    CF -. "uses" .-> Engine
-    FS -- "live listeners (read-only)" --> UI
-    UI <-- "online / offline" --> RT
+    UI -- "ID token" --> Google
+    UI -- "HTTPS commands" --> Caddy
+    UI <-- "WebSocket live updates" --> Caddy
+    Caddy --> Server
+    Server -- "transactions (row locks)" --> ADB
+    Server -. "uses" .-> Engine
 ```
 
 <details>
@@ -267,12 +264,12 @@ sequenceDiagram
     autonumber
     actor P as Player
     participant C as Browser
-    participant F as submitGameAction
-    participant DB as Firestore
+    participant F as Game server
+    participant DB as Oracle DB
     P->>C: Click "Roll dice"
-    C->>F: commandId, gameId, expectedVersion, ROLL_DICE
-    F->>F: Verify auth + validate payload (Zod)
-    F->>DB: Begin transaction
+    C->>F: POST /api/submitGameAction (commandId, expectedVersion, ROLL_DICE)
+    F->>F: Verify session + validate payload (Zod)
+    F->>DB: Begin transaction, SELECT … FOR UPDATE
     DB-->>F: receipt?, game snapshot, deck order
     alt same commandId seen before
         F-->>C: stored result (no double charge)
@@ -280,10 +277,10 @@ sequenceDiagram
         F-->>C: VERSION_CONFLICT
     else valid
         F->>F: Engine rolls with crypto RNG, moves, resolves landing
-        F->>DB: snapshot v+1, events, receipt (one atomic commit)
+        F->>DB: snapshot v+1, events, receipt (one COMMIT)
         F-->>C: ok
     end
-    DB-->>C: listener pushes the new state to every player
+    F-->>C: WebSocket hub pushes the new state to every player
     C->>P: Dice spin, token walks, sound plays
 ```
 
@@ -319,11 +316,12 @@ When a turn timer expires, the server applies a deterministic default (auto-roll
 <summary><b>🔐 Security model</b></summary>
 <br />
 
-- **Clients never write.** [`firestore.rules`](firestore.rules) denies every client write. All changes go through Cloud Functions.
+- **Clients never write.** The browser only *reads* over the WebSocket, through [`server/src/realtime/access.ts`](server/src/realtime/access.ts). Every change is a validated `POST /api/*` call.
 - **Hidden information stays hidden.** Card deck order lives in a server-only document.
-- **One command = one transaction.** Each command checks the version, applies the engine, appends events and stores an idempotency receipt atomically.
+- **One command = one transaction.** Each command locks the game row, checks the version, applies the engine, appends events and stores an idempotency receipt atomically.
+- **Verified sign-in.** Google ID tokens are checked against Google's keys, then the server issues its own signed session token.
 - **Membership everywhere.** Only room members can read rooms, games and events, and only participants can read an archive.
-- **Abuse limits.** Rate limits cover room creation, joins, friend requests and reactions. Invite codes are hashed and use an unambiguous alphabet.
+- **Abuse limits.** Rate limits cover sign-in, room creation, joins, friend requests and reactions. CORS allows only the game's own site. Invite codes are hashed and use an unambiguous alphabet.
 - **Privacy.** Logs carry hashed IDs and correlation IDs, never tokens. Other players see only your display name, photo and friend code.
 
 </details>
@@ -336,19 +334,21 @@ When a turn timer expires, the server applies a deterministic default (auto-roll
 shared/              Pure domain: board, cards, ruleset, engine, Zod schemas, API errors
   engine/            Deterministic state machine (RNG, clock, IDs injected)
   test/              Unit + fast-check property tests
-functions/src/       Cloud Functions
+server/src/          Node game server
+  http/              REST API, Google/dev sign-in, CORS, rate limits
+  realtime/          WebSocket hub, read permissions, presence
   room-service/      Rooms, lobby, reactions, invites
   game-engine/       submitGameAction + timeout sweeper
   friend-service/    Profiles, friends, archives, account deletion
   archive-service/   Archive → verify → cleanup
-  db/                Firestore adapter + in-memory adapter for tests
+  db/                Oracle adapter + in-memory adapter (tests, local dev)
 src/                 React app (features/, components/, hooks/, stores/)
-tests/rules/         Security-rules tests (emulator)
+deploy/              Oracle Cloud VM setup, Caddy, systemd, DB user SQL
 e2e/                 Playwright
-docs/                architecture · rules · runbooks · images
+docs/                architecture · rules · runbooks · deploy-oracle · images
 ```
 
-More detail: [`docs/architecture.md`](docs/architecture.md) · [`docs/rules.md`](docs/rules.md) · [`docs/runbooks.md`](docs/runbooks.md)
+More detail: [`docs/architecture.md`](docs/architecture.md) · [`docs/rules.md`](docs/rules.md) · [`docs/runbooks.md`](docs/runbooks.md) · [`docs/deploy-oracle.md`](docs/deploy-oracle.md)
 
 </details>
 
@@ -359,27 +359,28 @@ More detail: [`docs/architecture.md`](docs/architecture.md) · [`docs/rules.md`]
 | Engine unit tests | movement, rent, doubles, jail, auctions, cards, building, trades, bankruptcy, timed mode | 39 |
 | Property-based invariants | money is conserved, building stays even, bank stock adds up, jail cards accounted for, version always increases | 2 × 150 runs |
 | Backend integration | full rooms, duplicate joins, out-of-turn moves, replays, simultaneous bids, rate limits, archive-before-delete | 20 |
-| Security rules (emulator) | non-members locked out, no client writes, deck order hidden | 4 |
+| Live server end-to-end | real HTTP + two WebSocket players, outsiders locked out, deck order hidden, presence, auto-archive | 6 |
 
 ## 🌍 Deployment
 
+Everything runs on **Oracle Cloud's Always Free tier** plus GitHub Pages. The full click-by-click guide is in **[`docs/deploy-oracle.md`](docs/deploy-oracle.md)**.
+
 <details>
-<summary><b>Step-by-step (Firebase + GitHub Pages)</b></summary>
+<summary><b>The short version</b></summary>
 <br />
 
-1. Create separate **staging** and **production** Firebase projects (Blaze plan for Functions and schedules) and set **budget alerts**.
-2. Enable **Google** sign-in, and add your Pages or custom domain to *Auth → Authorized domains*.
-3. Create Firestore in `asia-south1` and the Realtime Database in `asia-southeast1`.
-4. Deploy the backend:
+1. **VM:** create an Ubuntu 24.04 Always Free instance with a public IP, and open TCP 80/443 in its security list.
+2. **Database:** create an Always Free Autonomous Database (Transaction Processing). Allow only the VM's IP, untick *mTLS required*, run [`deploy/oracle/01-create-app-user.sql`](deploy/oracle/01-create-app-user.sql), and copy the `_tp` TLS connect string.
+3. **Google:** create an OAuth **Web** client ID with origins `https://blessingstonsk.github.io` and `http://localhost:5173`.
+4. **Server:** SSH into the VM and run:
    ```bash
-   npx firebase deploy --project staging --only firestore,database,functions
+   curl -fsSL https://raw.githubusercontent.com/blessingstonsk/Indian-Business-Tycoon-/main/deploy/oci/setup.sh | bash
    ```
-5. Enable the **TTL policies** on `ttlAt` (reactions, rate limits, command receipts).
-6. Set up **App Check** (reCAPTCHA Enterprise): set `VITE_APPCHECK_SITE_KEY`, and `ENFORCE_APP_CHECK=true` for functions.
-7. In GitHub, go to **Settings → Pages → Source: GitHub Actions**, then add the repository variables `VITE_FIREBASE_*` (and optionally `VITE_APP_BASE_PATH`). Every push to `main` deploys.
+   Then put the DB password, connect string and client ID in `/etc/ibt/server.env` and run `sudo systemctl restart ibt-server`. The script prints your HTTPS address (`https://<ip-with-dashes>.sslip.io`).
+5. **Website:** add the GitHub repository variables `VITE_API_URL` (that address) and `VITE_GOOGLE_CLIENT_ID`, then re-run **Deploy to GitHub Pages**.
 
 > [!IMPORTANT]
-> Never commit service-account keys. The Firebase web config is public by design; security comes from Auth, the rules, App Check and the backend checks.
+> The database password and session secret live only in `/etc/ibt/server.env` on the VM. Never commit them or paste them into chats or issues.
 
 </details>
 
@@ -392,7 +393,8 @@ More detail: [`docs/architecture.md`](docs/architecture.md) · [`docs/rules.md`]
 - [x] Reactions with rate limits and auto-expiry
 - [x] Archive → verify → cleanup lifecycle, game history
 - [x] Responsive board, 3D dice, animations, sound, dark mode
-- [ ] Real Firebase project, App Check and budget alerts
+- [x] Node game server with live WebSocket sync, ready for Oracle Cloud
+- [ ] Oracle Cloud VM + Autonomous Database live, Google sign-in on the public site
 - [ ] Two-device and six-player playtests on mobile Safari and Android
 - [ ] Balance simulations for tower rents
 - [ ] Bots for solo practice

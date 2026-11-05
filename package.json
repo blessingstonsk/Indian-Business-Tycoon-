@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Real-time multiplayer Indian property-trading board game (React + Vite + Firebase)",
+  "description": "Real-time multiplayer Indian property-trading board game (React + Vite, Node + Oracle Cloud)",
   "engines": {
     "node": ">=22"
   },
@@ -11,20 +11,18 @@
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/spa-fallback.mjs",
     "preview": "vite preview",
-    "typecheck": "tsc -b && npm --prefix functions run typecheck",
+    "typecheck": "tsc -b && npm --prefix server run typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "vitest run && npm --prefix functions test",
+    "test": "vitest run && npm --prefix server test",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
-    "emulators": "npm run functions:build && firebase emulators:start --project demo-ibt",
-    "functions:build": "npm --prefix functions run build",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-ibt-rules \"vitest run tests/rules\""
+    "server": "npm --prefix server run dev",
+    "server:build": "npm --prefix server run build"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.14",
     "@tanstack/react-query": "^5.80.0",
-    "firebase": "^11.9.0",
     "framer-motion": "^12.16.0",
     "lucide-react": "^0.511.0",
     "react": "^19.1.0",
@@ -35,7 +33,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",
-    "@firebase/rules-unit-testing": "^4.0.1",
     "@playwright/test": "^1.52.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -48,7 +45,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "fast-check": "^4.1.1",
-    "firebase-tools": "^14.27.0",
     "globals": "^16.2.0",
     "jsdom": "^26.1.0",
     "postcss": "^8.5.4",

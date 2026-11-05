@@ -1,0 +1,22 @@
+[Unit]
+Description=Indian Business Tycoon game server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ibt
+Group=ibt
+WorkingDirectory=/opt/ibt/server
+EnvironmentFile=/etc/ibt/server.env
+ExecStart=/usr/bin/node dist/server.js
+Restart=always
+RestartSec=3
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/ibt/server
+
+[Install]
+WantedBy=multi-user.target

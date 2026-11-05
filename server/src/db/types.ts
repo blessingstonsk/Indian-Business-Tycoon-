@@ -1,5 +1,5 @@
-// Minimal persistence port so services are testable without the Firebase emulator.
-// Semantics mirror Firestore: transactions are serializable and all reads must precede writes.
+// Minimal document-store port: Oracle in production, in-memory for tests and local development.
+// Transactions are serializable and all reads must precede writes, in every adapter.
 
 export type DocData = Record<string, unknown>;
 
@@ -35,6 +35,14 @@ export interface Db {
   queryGroup<T = DocData>(collectionId: string, filters: Filter[], options?: QueryOptions): Promise<QueryDoc<T>[]>;
   /** delete a document and all of its subcollections; succeeds if absent */
   deleteTree(path: string): Promise<void>;
+  /** called after every committed write with the document paths that changed (drives live sync) */
+  onChange(listener: (paths: string[]) => void): () => void;
+  close?(): Promise<void>;
+}
+
+/** Parent collection path of a document path: "rooms/r1/members/u1" → "rooms/r1/members". */
+export function collectionOf(path: string): string {
+  return path.split('/').slice(0, -1).join('/');
 }
 
 export interface Clock {

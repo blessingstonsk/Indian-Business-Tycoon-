@@ -22,7 +22,7 @@ interface RateLimitDoc {
   ttlAt: number;
 }
 
-/** Sliding-window limiter stored in Firestore so it holds across function instances. */
+/** Sliding-window limiter stored in the database so it survives server restarts. */
 export async function rateLimit(ctx: ServiceContext, key: string, max: number, windowMs: number): Promise<void> {
   const now = ctx.clock.now();
   await ctx.db.runTransaction(async (tx) => {

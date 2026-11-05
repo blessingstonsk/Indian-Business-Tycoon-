@@ -1,12 +1,10 @@
-import { collection, limit, orderBy, query, where } from 'firebase/firestore';
 import { ShieldAlert } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { Button, EmptyState, Spinner } from '../../components/ui/primitives';
-import { useDoc, useQueryDocs } from '../../hooks/useFirestore';
+import { useDoc, useQueryDocs } from '../../hooks/useLive';
 import { api, ApiClientError } from '../../lib/api/callables';
-import { firebase } from '../../lib/firebase/client';
 import { usePresence } from '../../lib/presence';
 import { reportError, toast } from '../../stores/toasts';
 import type { EventDoc, GameDoc, ReactionDoc } from '../../domain/docs';
@@ -18,13 +16,13 @@ export function GamePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const game = useDoc<GameDoc>(`games/${gameId}`);
-  const events = useQueryDocs<EventDoc>(game.data ? `events-${gameId}` : null, () =>
-    query(collection(firebase().db, `games/${gameId}/events`), orderBy('sequence', 'desc'), limit(80)),
+  const events = useQueryDocs<EventDoc>(
+    game.data ? { collection: `games/${gameId}/events`, orderBy: { field: 'sequence', direction: 'desc' }, limit: 80 } : null,
   );
   const [since] = useState(() => Date.now() - 10_000);
   const roomId = game.data?.roomId ?? null;
-  const reactions = useQueryDocs<ReactionDoc>(roomId ? `reactions-${roomId}` : null, () =>
-    query(collection(firebase().db, `rooms/${roomId}/reactions`), where('createdAt', '>', since), orderBy('createdAt', 'asc'), limit(30)),
+  const reactions = useQueryDocs<ReactionDoc>(
+    roomId ? { collection: `rooms/${roomId}/reactions`, where: [['createdAt', '>', since]], orderBy: { field: 'createdAt', direction: 'asc' }, limit: 30 } : null,
   );
   const presence = usePresence(game.data?.playerOrder ?? []);
   const [pending, setPending] = useState<ActionType | null>(null);

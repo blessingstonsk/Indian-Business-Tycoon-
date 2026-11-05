@@ -1,13 +1,11 @@
-import { collection, query, where } from 'firebase/firestore';
 import { BookOpen, ChevronRight, Copy, DoorOpen, Mail, PlusCircle, ScrollText, Trophy, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { Button, EmptyState } from '../../components/ui/primitives';
-import { useDoc, useQueryDocs } from '../../hooks/useFirestore';
+import { useDoc, useQueryDocs } from '../../hooks/useLive';
 import { api } from '../../lib/api/callables';
-import { firebase } from '../../lib/firebase/client';
 import { duration, relativeTime } from '../../lib/utils/format';
 import { reportError, toast } from '../../stores/toasts';
 import type { RoomDoc, RoomInviteDoc } from '../../domain/docs';
@@ -42,7 +40,7 @@ export function HomePage() {
     if (params.get('create')) setParams({}, { replace: true });
   }, [params, setParams]);
 
-  const invites = useQueryDocs<RoomInviteDoc>(uid ? `invites-${uid}` : null, () => query(collection(firebase().db, 'roomInvites'), where('toUid', '==', uid)));
+  const invites = useQueryDocs<RoomInviteDoc>(uid ? { collection: 'roomInvites', where: [['toUid', '==', uid]] } : null);
   const recent = useQuery({ queryKey: ['archives', uid, 'recent'], queryFn: () => api.getMyArchives(null, 3), enabled: Boolean(uid) });
 
   if (!profile) return null;

@@ -15,7 +15,7 @@ import type { PresenceState } from '../../lib/presence';
 
 export type ActionType = GameAction['type'];
 
-/** Everything the game screen needs, whether backed by Firestore or the local dev playground. */
+/** Everything the game screen needs, whether backed by the game server or the local dev playground. */
 export interface GameController {
   game: GameState;
   events: EventDoc[];

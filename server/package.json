@@ -1,0 +1,31 @@
+{
+  "name": "ibt-server",
+  "private": true,
+  "type": "module",
+  "main": "dist/server.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/main.ts",
+    "build": "node build.mjs",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "jose": "^5.10.0",
+    "oracledb": "^6.8.0",
+    "ws": "^8.18.2",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/oracledb": "^6.6.0",
+    "@types/ws": "^8.18.1",
+    "esbuild": "^0.25.5",
+    "tsx": "^4.20.0",
+    "typescript": "~5.8.3",
+    "vitest": "^3.2.0"
+  }
+}

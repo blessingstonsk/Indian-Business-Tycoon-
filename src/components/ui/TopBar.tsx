@@ -1,6 +1,8 @@
 import { History, Home, Monitor, Moon, Settings, Sun, Users, Volume2, VolumeX, WifiOff } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../../app/providers/AuthProvider';
+import { useLiveConnected } from '../../hooks/useLive';
 import { useOnline } from '../../lib/presence';
 import { cx } from '../../lib/utils/format';
 import { useSettings, type Theme } from '../../stores/settings';
@@ -51,11 +53,19 @@ const NAV = [
 export function TopBar() {
   const { profile } = useAuth();
   const online = useOnline();
+  const connected = useLiveConnected();
+  // Only complain after a few seconds so the initial connect doesn't flash a banner.
+  const [graceOver, setGraceOver] = useState(false);
+  useEffect(() => {
+    if (connected) return setGraceOver(false);
+    const t = setTimeout(() => setGraceOver(true), 3000);
+    return () => clearTimeout(t);
+  }, [connected]);
   return (
     <>
-      {!online && (
+      {(!online || (!connected && graceOver)) && (
         <div className="flex items-center justify-center gap-2 bg-gold-soft px-3 py-1.5 text-sm font-medium text-ink" role="status">
-          <WifiOff className="h-4 w-4" /> You are offline – reconnecting. Your seat is safe.
+          <WifiOff className="h-4 w-4" /> {online ? 'Reconnecting to the game server…' : 'You are offline – reconnecting.'} Your seat is safe.
         </div>
       )}
       <header className="sticky top-0 z-30 border-b border-line bg-canvas/90 backdrop-blur">

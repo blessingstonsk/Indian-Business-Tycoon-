@@ -10,7 +10,7 @@ import { GamePage } from '../features/game/GamePage';
 import { HistoryPage } from '../features/history/HistoryPage';
 import { JoinLinkPage, LobbyPage } from '../features/rooms/LobbyPage';
 import { ProfilePage, SettingsPage } from '../features/settings/SettingsPages';
-import { firebaseConfigured } from '../lib/firebase/client';
+import { backendConfigured } from '../lib/backend';
 import { useSettings } from '../stores/settings';
 import { AuthProvider, useAuth } from './providers/AuthProvider';
 
@@ -64,7 +64,7 @@ const devRoutes: RouteObject[] = import.meta.env.DEV
     ]
   : [];
 
-const routes: RouteObject[] = firebaseConfigured
+const routes: RouteObject[] = backendConfigured
   ? [
       { path: '/', element: <LandingPage /> },
       {
@@ -92,7 +92,7 @@ export function App() {
   const content = <RouterProvider router={router} />;
   return (
     <QueryClientProvider client={queryClient}>
-      {firebaseConfigured ? <AuthProvider>{content}</AuthProvider> : content}
+      {backendConfigured ? <AuthProvider>{content}</AuthProvider> : content}
       <Toasts />
     </QueryClientProvider>
   );

@@ -1,4 +1,4 @@
-// Client-side views of the Firestore documents the backend writes (see functions/src/shared/model.ts).
+// Client-side views of the documents the game server stores and pushes (see server/src/shared/model.ts).
 import type { GameState, TurnTimer, GameMode } from '@shared';
 
 export interface UserDoc {
@@ -49,8 +49,8 @@ export interface ReactionDoc {
   displayName: string;
   emoteId: string;
   createdAt: number;
-  /** Firestore Timestamp when read from Firestore; use createdAt + REACTION_TTL_MS for expiry. */
-  ttlAt: unknown;
+  /** Server-side expiry; the UI uses createdAt + REACTION_TTL_MS. */
+  ttlAt: number;
 }
 
 export interface FriendRequestDoc {

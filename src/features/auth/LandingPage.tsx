@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { BookOpen, LogIn, Wrench } from 'lucide-react';
+import { BookOpen, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { BOARD, GROUP_META, type PropertySpace } from '@shared';
@@ -8,9 +8,10 @@ import { Die } from '../../components/board/Dice3D';
 import { PropertyArt } from '../../components/board/PropertyArt';
 import { Button, Spinner } from '../../components/ui/primitives';
 import { Logo, SoundToggle, ThemeToggle } from '../../components/ui/TopBar';
-import { usingEmulators } from '../../lib/firebase/client';
+import { DEV_LOGIN } from '../../lib/backend';
 import { rupees } from '../../lib/utils/format';
 import { HowToPlay } from '../howto/HowToPlay';
+import { GoogleSignInButton } from './GoogleSignInButton';
 
 const SHOWCASE = [39, 32, 29, 1].map((id) => BOARD[id] as PropertySpace);
 
@@ -57,7 +58,7 @@ export function Hero({ children }: { children: React.ReactNode }) {
 }
 
 export function LandingPage() {
-  const { user, profile, initializing, signIn, signInTestUser } = useAuth();
+  const { user, profile, initializing, signInTestUser } = useAuth();
   const [testName, setTestName] = useState('');
   const location = useLocation();
   const [howTo, setHowTo] = useState(false);
@@ -69,38 +70,27 @@ export function LandingPage() {
       {initializing ? (
         <Spinner label="Checking your session…" />
       ) : (
-        <div className="flex flex-wrap gap-3">
-          <Button
-            size="lg"
-            icon={<LogIn className="h-5 w-5" />}
-            loading={busy}
-            onClick={async () => {
-              setBusy(true);
-              await signIn();
-              setBusy(false);
-            }}
-          >
-            Sign in with Google
-          </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <GoogleSignInButton />
           <Button size="lg" variant="secondary" icon={<BookOpen className="h-5 w-5" />} onClick={() => setHowTo(true)}>
             How to play
           </Button>
         </div>
       )}
-      {usingEmulators && !initializing && (
+      {DEV_LOGIN && !initializing && (
         <form
           className="mt-4 flex max-w-md gap-2"
           onSubmit={async (e) => {
             e.preventDefault();
             setBusy(true);
-            await signInTestUser(testName).catch(() => undefined);
+            await signInTestUser(testName);
             setBusy(false);
           }}
         >
           <label htmlFor="test-name" className="sr-only">
             Test player name
           </label>
-          <input id="test-name" className="field" placeholder="Emulator test player name" value={testName} onChange={(e) => setTestName(e.target.value)} />
+          <input id="test-name" className="field" placeholder="Test player name (dev only)" value={testName} onChange={(e) => setTestName(e.target.value)} />
           <Button type="submit" variant="secondary" className="shrink-0 whitespace-nowrap" disabled={testName.trim().length < 2} loading={busy}>
             Test sign-in
           </Button>
@@ -112,23 +102,29 @@ export function LandingPage() {
   );
 }
 
+/** Shown when this build has no game server address (VITE_API_URL). */
 export function SetupRequired() {
+  const [howTo, setHowTo] = useState(false);
   return (
     <Hero>
       <div className="card space-y-3 p-5 text-sm">
         <p className="flex items-center gap-2 font-display text-lg font-semibold">
-          <Wrench className="h-5 w-5 text-gold" /> Firebase is not configured
+          <Wrench className="h-5 w-5 text-gold" /> The game server is getting ready
         </p>
-        <p className="text-muted">
-          Copy <code>.env.example</code> to <code>.env.local</code> and fill in your Firebase web config (or set <code>VITE_USE_EMULATORS=true</code> with the Emulator Suite). See the README for
-          the full setup.
-        </p>
-        {import.meta.env.DEV && (
-          <Link to="/dev/playground">
-            <Button variant="secondary">Open the local board playground</Button>
-          </Link>
-        )}
+        <p className="text-muted">Online play opens as soon as the server is connected. Meanwhile, learn the rules!</p>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" icon={<BookOpen className="h-4 w-4" />} onClick={() => setHowTo(true)}>
+            How to play
+          </Button>
+          {import.meta.env.DEV && (
+            <Link to="/dev/playground">
+              <Button variant="secondary">Open the local board playground</Button>
+            </Link>
+          )}
+        </div>
+        <p className="text-xs text-muted">Site owner: set <code>VITE_API_URL</code> (see README → Deployment).</p>
       </div>
+      <HowToPlay open={howTo} onOpenChange={setHowTo} />
     </Hero>
   );
 }

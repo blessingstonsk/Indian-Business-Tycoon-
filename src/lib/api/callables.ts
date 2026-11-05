@@ -1,6 +1,5 @@
-import { httpsCallable } from 'firebase/functions';
 import type { ApiErrorCode, ApiResult, GameMode, TurnTimer } from '@shared';
-import { firebase } from '../firebase/client';
+import { API_URL, getSession, setSession, type Session } from '../backend';
 import type { GameArchiveDoc, UserDoc } from '../../domain/docs';
 
 export class ApiClientError extends Error {
@@ -14,18 +13,29 @@ export class ApiClientError extends Error {
   }
 }
 
-/** Calls a backend function and unwraps the ApiResult contract. Network failures become retryable INTERNAL errors. */
-export async function call<T>(name: string, data: unknown = {}): Promise<T> {
+async function request<T>(path: string, data: unknown, auth: boolean): Promise<T> {
+  const session = getSession();
   let result: ApiResult<T>;
   try {
-    const fn = httpsCallable<unknown, ApiResult<T>>(firebase().functions, name, { timeout: 20_000 });
-    result = (await fn(data)).data;
+    const res = await fetch(`${API_URL}${path}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...(auth && session ? { authorization: `Bearer ${session.token}` } : {}) },
+      body: JSON.stringify(data ?? {}),
+      signal: AbortSignal.timeout(20_000),
+    });
+    result = (await res.json()) as ApiResult<T>;
   } catch {
     throw new ApiClientError('INTERNAL', 'Network problem – check your connection and retry', true);
   }
-  if (!result.ok) throw new ApiClientError(result.error.code, result.error.message, result.error.retryable, result.error.correlationId);
+  if (!result.ok) {
+    if (result.error.code === 'UNAUTHENTICATED' && auth) setSession(null);
+    throw new ApiClientError(result.error.code, result.error.message, result.error.retryable, result.error.correlationId);
+  }
   return result.data;
 }
+
+/** Calls POST /api/<name> on the game server and unwraps the ApiResult contract. */
+export const call = <T>(name: string, data: unknown = {}) => request<T>(`/api/${name}`, data, true);
 
 export interface RoomSettingsInput {
   maxPlayers: number;
@@ -33,7 +43,11 @@ export interface RoomSettingsInput {
   turnTimerSeconds: TurnTimer;
 }
 
+type SignInResult = Session & { profile: UserDoc };
+
 export const api = {
+  signInWithGoogle: (credential: string) => request<SignInResult>('/auth/google', { credential }, false),
+  signInTestUser: (name: string) => request<SignInResult>('/auth/dev', { name }, false),
   bootstrapProfile: () => call<UserDoc>('bootstrapProfile'),
   updateProfile: (input: { displayName?: string; allowFriendRequests?: UserDoc['privacy']['allowFriendRequests'] }) =>
     call<UserDoc>('updateProfile', input),

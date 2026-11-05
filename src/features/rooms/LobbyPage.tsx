@@ -1,4 +1,3 @@
-import { collection, limit, orderBy, query, where } from 'firebase/firestore';
 import { Check, Copy, Crown, LogOut, Play, Share2, UserMinus, UserPlus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
@@ -6,9 +5,8 @@ import { RULESET, TOKENS } from '@shared';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { ReactionBubbles, ReactionTray } from '../../components/feedback/Overlays';
 import { Avatar, Button, Dialog, EmptyState, Spinner, TokenBadge } from '../../components/ui/primitives';
-import { useDoc, useQueryDocs } from '../../hooks/useFirestore';
+import { useDoc, useQueryDocs } from '../../hooks/useLive';
 import { api, type RoomSettingsInput } from '../../lib/api/callables';
-import { firebase } from '../../lib/firebase/client';
 import { usePresence } from '../../lib/presence';
 import { cx } from '../../lib/utils/format';
 import { reportError, toast } from '../../stores/toasts';
@@ -22,7 +20,7 @@ export function inviteUrl(code: string): string {
 function InviteFriends({ roomId, open, onOpenChange, memberUids }: { roomId: string; open: boolean; onOpenChange: (o: boolean) => void; memberUids: string[] }) {
   const { user } = useAuth();
   const uid = user!.uid;
-  const friends = useQueryDocs<FriendshipDoc>(open ? `friends-${uid}` : null, () => query(collection(firebase().db, 'friendships'), where('uids', 'array-contains', uid)));
+  const friends = useQueryDocs<FriendshipDoc>(open ? { collection: 'friendships', where: [['uids', 'array-contains', uid]] } : null);
   const [sent, setSent] = useState<Set<string>>(new Set());
   return (
     <Dialog open={open} onOpenChange={onOpenChange} title="Invite friends" description="They'll see the invite on their home screen.">
@@ -67,10 +65,10 @@ export function LobbyPage() {
   const navigate = useNavigate();
   const uid = user!.uid;
   const room = useDoc<RoomDoc>(`rooms/${roomId}`);
-  const members = useQueryDocs<MemberDoc>(room.data ? `members-${roomId}` : null, () => query(collection(firebase().db, `rooms/${roomId}/members`), orderBy('joinedAt', 'asc')));
+  const members = useQueryDocs<MemberDoc>(room.data ? { collection: `rooms/${roomId}/members`, orderBy: { field: 'joinedAt', direction: 'asc' } } : null);
   const [since] = useState(() => Date.now() - 10_000);
-  const reactions = useQueryDocs<ReactionDoc>(room.data ? `lobby-reactions-${roomId}` : null, () =>
-    query(collection(firebase().db, `rooms/${roomId}/reactions`), where('createdAt', '>', since), orderBy('createdAt', 'asc'), limit(30)),
+  const reactions = useQueryDocs<ReactionDoc>(
+    room.data ? { collection: `rooms/${roomId}/reactions`, where: [['createdAt', '>', since]], orderBy: { field: 'createdAt', direction: 'asc' }, limit: 30 } : null,
   );
   const presence = usePresence(room.data?.memberUids ?? []);
   const [busy, setBusy] = useState<string | null>(null);

@@ -7,7 +7,7 @@ import type { ActionType, GameController } from '../game/controller';
 import { GameView } from '../game/GameView';
 
 // DEVELOPMENT ONLY (excluded from production routes): runs the pure engine in the browser,
-// hot-seat style, so the board UI can be exercised without the Firebase backend.
+// hot-seat style, so the board UI can be exercised without the game server.
 
 const rand = (n: number) => {
   const buf = new Uint32Array(1);

@@ -1,6 +1,5 @@
 node_modules
 dist
-functions/lib
 .emulator-data
 *.log
 .env
@@ -10,3 +9,6 @@ functions/lib
 coverage
 playwright-report
 test-results
+server/dist
+server/.env
+data

@@ -116,7 +116,7 @@ export function ReactionBubbles({ reactions }: { reactions: ReactionDoc[] }) {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  // ttlAt is a Firestore Timestamp on the wire (for TTL policies), so derive expiry from createdAt.
+  // Expiry is derived from createdAt so client and server clocks never need to agree on ttlAt's format.
   const live = reactions.filter((r) => r.createdAt + REACTION_TTL_MS > now).slice(-6);
   return (
     <div className="pointer-events-none fixed bottom-24 right-4 z-30 flex flex-col items-end gap-2" aria-live="polite">

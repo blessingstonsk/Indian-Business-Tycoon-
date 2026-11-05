@@ -1,12 +1,10 @@
-import { collection, query, where } from 'firebase/firestore';
 import { Check, Copy, UserPlus, Users, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { FRIEND_CODE_LENGTH } from '@shared';
 import { useAuth } from '../../app/providers/AuthProvider';
 import { Avatar, Button, EmptyState } from '../../components/ui/primitives';
-import { useQueryDocs } from '../../hooks/useFirestore';
+import { useQueryDocs } from '../../hooks/useLive';
 import { api } from '../../lib/api/callables';
-import { firebase } from '../../lib/firebase/client';
 import { usePresence } from '../../lib/presence';
 import { reportError, toast } from '../../stores/toasts';
 import type { FriendRequestDoc, FriendshipDoc } from '../../domain/docs';
@@ -14,10 +12,14 @@ import type { FriendRequestDoc, FriendshipDoc } from '../../domain/docs';
 export function FriendsPage() {
   const { user, profile } = useAuth();
   const uid = user!.uid;
-  const friends = useQueryDocs<FriendshipDoc>(`friendships-${uid}`, () => query(collection(firebase().db, 'friendships'), where('uids', 'array-contains', uid)));
-  const requests = useQueryDocs<FriendRequestDoc>(`requests-${uid}`, () =>
-    query(collection(firebase().db, 'friendRequests'), where('participants', 'array-contains', uid), where('status', '==', 'PENDING')),
-  );
+  const friends = useQueryDocs<FriendshipDoc>({ collection: 'friendships', where: [['uids', 'array-contains', uid]] });
+  const requests = useQueryDocs<FriendRequestDoc>({
+    collection: 'friendRequests',
+    where: [
+      ['participants', 'array-contains', uid],
+      ['status', '==', 'PENDING'],
+    ],
+  });
   const friendUids = friends.data.map((f) => f.uids.find((u) => u !== uid)!);
   const presence = usePresence(friendUids);
   const [code, setCode] = useState('');

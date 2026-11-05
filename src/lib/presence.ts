@@ -1,24 +1,7 @@
-import { onDisconnect, onValue, ref, serverTimestamp, set } from 'firebase/database';
 import { useEffect, useState } from 'react';
-import { firebase } from './firebase/client';
+import { live } from './realtime';
 
-// Realtime Database presence with onDisconnect. Presence is display-only: it never affects seats or rules.
-
-export function startPresence(uid: string): () => void {
-  const rtdb = firebase().rtdb;
-  if (!rtdb) return () => undefined;
-  const statusRef = ref(rtdb, `status/${uid}`);
-  const unsub = onValue(ref(rtdb, '.info/connected'), (snap) => {
-    if (snap.val() !== true) return;
-    void onDisconnect(statusRef)
-      .set({ state: 'offline', lastChanged: serverTimestamp() })
-      .then(() => set(statusRef, { state: 'online', lastChanged: serverTimestamp() }));
-  });
-  return () => {
-    unsub();
-    void set(statusRef, { state: 'offline', lastChanged: serverTimestamp() });
-  };
-}
+// Presence comes from the server, which knows who has an open live connection. Display only.
 
 export type PresenceState = 'online' | 'reconnecting' | 'offline';
 
@@ -28,10 +11,10 @@ export function usePresence(uids: string[]): Record<string, PresenceState> {
   const [, tick] = useState(0);
   const key = uids.join(',');
   useEffect(() => {
-    const rtdb = firebase().rtdb;
-    if (!rtdb) return;
     const unsubs = uids.map((uid) =>
-      onValue(ref(rtdb, `status/${uid}`), (snap) => setRaw((r) => ({ ...r, [uid]: snap.val() ?? { state: 'offline', lastChanged: 0 } }))),
+      live.subscribe(`doc:status/${uid}`, { op: 'sub', doc: `status/${uid}` }, (value) =>
+        setRaw((r) => ({ ...r, [uid]: (value as { state: string; lastChanged: number } | null) ?? { state: 'offline', lastChanged: 0 } })),
+      ),
     );
     const t = setInterval(() => tick((n) => n + 1), 15_000);
     return () => {
@@ -43,8 +26,7 @@ export function usePresence(uids: string[]): Record<string, PresenceState> {
   const out: Record<string, PresenceState> = {};
   for (const uid of uids) {
     const s = raw[uid];
-    if (!s) out[uid] = 'online';
-    else if (s.state === 'online') out[uid] = 'online';
+    if (!s || s.state === 'online') out[uid] = 'online';
     else out[uid] = Date.now() - s.lastChanged < 60_000 ? 'reconnecting' : 'offline';
   }
   return out;
